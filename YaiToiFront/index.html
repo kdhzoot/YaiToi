@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inria+Serif:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body,
+      html {
+        height: 100vh;
+        width: 100%;
+        margin: 0;
+      }
+
+      #main-container {
+        height: 100%;
+        width: 60%;
+        margin: 0;
+        float: left;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+
+      #banner {
+        color: black; /* 텍스트 색상 */
+        text-align: center; /* 텍스트 가운데 정렬 */
+        padding: 10px 0; /* 상하 10px, 좌우 0px의 패딩 */
+        margin-bottom: 20px;
+        font-size: 40px; /* 폰트 크기 */
+        font-family: "Inria Serif", serif;
+        font-weight: 700;
+        font-style: italic;
+      }
+
+      canvas {
+        border: 1px solid black;
+      }
+
+      #footer {
+        margin: 20px;
+      }
+
+      /* 버튼 스타일 추가 */
+      #footer button {
+        background-color: #333; /* 어두운 회색 배경 */
+        color: white; /* 흰색 텍스트 */
+        border: none; /* 테두리 제거 */
+        padding: 10px 20px; /* 패딩 */
+        margin: 5px; /* 주변 여백 */
+        border-radius: 5px; /* 둥근 모서리 */
+        cursor: pointer; /* 마우스 오버시 커서 변경 */
+        font-size: 16px; /* 폰트 크기 */
+        transition: background-color 0.3s; /* 배경색 변경시 트랜지션 효과 */
+      }
+
+      /* 버튼 호버 효과 */
+      #footer button:hover {
+        background-color: #555; /* 호버시 배경색 변경 */
+      }
+
+      #footer button[disabled] {
+        background-color: #555;
+        cursor: not-allowed;
+      }
+
+      #sub-container {
+        float: left;
+        height: 100%;
+        margin: 0;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .loading-spinner {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid black;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 2s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loadingBar" class="loading-overlay" style="display: none">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <div id="main-container">
+      <div id="banner">Draw your picture</div>
+      <canvas id="myCanvas" width="600" height="600">
+        Your browser does not support the HTML5 canvas tag.
+      </canvas>
+      <div id="footer">
+        <button id="clearCanvas">Clear Canvas</button>
+        <button id="uploadCanvas">Upload Canvas</button>
+      </div>
+    </div>
+    <div id="sub-container">
+      <div>
+        여기에도 무슨 내용이 들어가야 되겠죠? 근데 그게 뭐일지는 모르겠네요
+      </div>
+    </div>
+
+    <script>
+      var canvas = document.getElementById("myCanvas");
+      var ctx = canvas.getContext("2d");
+      var painting = false;
+      var categoryData = {
+        0: "굴뚝",
+        1: "길",
+        2: "꽃",
+        3: "나무",
+        4: "문",
+        5: "산",
+        6: "연기",
+        7: "연못",
+        8: "울타리",
+        9: "잔디",
+        10: "지붕",
+        11: "집벽",
+        12: "집전체",
+        13: "창문",
+        14: "태양",
+      };
+
+      // 캔버스 좌표 보정 함수
+      function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top,
+        };
+      }
+
+      // 그리기 시작
+      function startPosition(e) {
+        painting = true;
+        draw(e);
+      }
+
+      // 그리기 종료
+      function finishedPosition() {
+        painting = false;
+        ctx.beginPath();
+      }
+
+      // 그리기
+      function draw(e) {
+        if (!painting) return;
+        var pos = getMousePos(canvas, e);
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "black";
+
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      }
+
+      function drawRect(bbox, label) {
+        // bbox 는 길이 4의 list [x1, y1, x2, y2]
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+
+        // 사각형의 네 꼭짓점 좌표
+        var x1 = bbox[0],
+          y1 = bbox[1]; // 첫 번째 꼭짓점
+        var x2 = bbox[2],
+          y2 = bbox[3]; // 두 번째 꼭짓점
+
+        // 사각형의 위치와 크기 계산
+        var startX = Math.min(x1, x2);
+        var startY = Math.min(y1, y2);
+        var width = Math.abs(x2 - x1);
+        var height = Math.abs(y2 - y1);
+
+        // 사각형 그리기
+        ctx.beginPath();
+        ctx.rect(startX, startY, width, height);
+        ctx.strokeStyle = "blue"; // 선 색상 설정
+        ctx.lineWidth = 1; // 선 두께 설정
+        ctx.stroke(); // 사각형 윤곽선 그리기
+
+        // 텍스트 설정
+        var text = label;
+        var x = startX;
+        var y = startY;
+
+        // 텍스트 스타일 설정
+        ctx.font = "15px Arial"; // 폰트 크기와 스타일
+        ctx.fillStyle = "black"; // 텍스트 색상
+
+        // 텍스트 그리기
+        ctx.fillText(text, x, y);
+        ctx.beginPath();
+      }
+
+      function handleResponse(data) {
+        // [
+        //   "scores" : [100],
+        //   "labels" : [100],
+        //   "boxes" : [100][4],
+        // ]
+        // 캔버스 요소 가져오기
+
+        var scores = data[0]["scores"];
+        var labels = data[0]["labels"];
+        var boxes = data[0]["boxes"];
+
+        // console.log(scores);
+        // console.log(labels);
+        // console.log(boxes);
+
+        for (let i = 0; i < boxes.length; i++) {
+          drawRect(boxes[i], categoryData[labels[i]]);
+        }
+
+        // 이벤트 리스너 제거
+        canvas.removeEventListener("mousedown", startPosition);
+        canvas.removeEventListener("mouseup", finishedPosition);
+        canvas.removeEventListener("mousemove", draw);
+
+        // 로딩 바 숨기기
+        document.getElementById("loadingBar").style.display = "none";
+      }
+
+      // 캔버스 내용 지우기
+      document
+        .getElementById("clearCanvas")
+        .addEventListener("click", function () {
+          // 업로드 버튼 다시 활성화
+          const btn = document.getElementById("uploadCanvas");
+          btn.disabled = false;
+
+          // 캔버스를 지우고 하얀색으로 배경을 칠함
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // 이벤트 리스너 등록
+          canvas.addEventListener("mousedown", startPosition);
+          canvas.addEventListener("mouseup", finishedPosition);
+          canvas.addEventListener("mousemove", draw);
+        });
+
+      // 캔버스 내용을 이미지로 변환하고 API에 전송
+      document
+        .getElementById("uploadCanvas")
+        .addEventListener("click", function () {
+          // 업로드 버튼 비활성화
+          const btn = document.getElementById("uploadCanvas");
+          btn.disabled = true;
+
+          document.getElementById("loadingBar").style.display = "flex"; // 로딩 바 표시
+
+          var image = canvas.toDataURL(); // 캔버스를 이미지로 변환
+
+          fetch("http://127.0.0.1:8000/predict/image", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ image: image }),
+          })
+            .then((response) => response.json())
+            .then(handleResponse)
+            .catch((error) => {
+              console.error("Error:", error);
+              document.getElementById("loadingBar").style.display = "none"; // 에러 발생시 로딩 바 숨기기
+            });
+        });
+
+      // 이벤트 리스너 등록
+      canvas.addEventListener("mousedown", startPosition);
+      canvas.addEventListener("mouseup", finishedPosition);
+      canvas.addEventListener("mousemove", draw);
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    </script>
+  </body>
+</html>

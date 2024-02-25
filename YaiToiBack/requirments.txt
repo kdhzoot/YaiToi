@@ -1,0 +1,5 @@
+torchvision
+torch
+fastapi[all]
+uvicorn
+pillow
