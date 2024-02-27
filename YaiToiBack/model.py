@@ -26,7 +26,7 @@ def get_model():
         representation_size=4096
     )
     box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(
-        4096, 15  # 클래스의 개수
+        4096, 47  # 클래스의 개수
     )
 
     # Faster R-CNN 모델 정의
