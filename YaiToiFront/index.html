@@ -140,6 +140,8 @@
         캔버스에 자유롭게 표현해보세요. 그려진 그림은 우리의 인공지능 알고리즘을
         통해 분석되며, 각 요소들이 어떻게 인식되는지 결과를 확인할 수 있습니다.
       </p>
+      <h2>분석 결과</h2>
+      <p id="results"></p>
     </div>
 
     <script>
@@ -280,6 +282,7 @@
         var scores = data[0]["scores"];
         var labels = data[0]["labels"];
         var boxes = data[0]["boxes"];
+        var results = data[0]["results"];
 
         // console.log(scores);
         // console.log(labels);
@@ -288,6 +291,10 @@
         for (let i = 0; i < boxes.length; i++) {
           drawRect(boxes[i], categoryData[labels[i]]);
         }
+
+        var resultsString = results.join("<br>");
+        var resultsP = document.getElementById("results");
+        resultsP.innerHTML = resultsString;
 
         // 이벤트 리스너 제거
         canvas.removeEventListener("mousedown", startPosition);

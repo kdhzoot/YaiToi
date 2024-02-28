@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 import torch
 from model import get_model
+from result import HTP
 from fastapi.middleware.cors import CORSMiddleware
 from torchvision.ops import nms
 
@@ -61,13 +62,16 @@ async def predict_api(item: ImageData):
     # 모델 예측 수행
     with torch.no_grad():
         # print(model.roi_heads.score_thresh)
-        model.roi_heads.score_thresh = 0.8
+        model.roi_heads.score_thresh = 0.5
         predictions = model(image)
 
     boxes = predictions[0]['boxes']
     labels = predictions[0]['labels']
     scores = predictions[0]['scores']  # 신뢰도 점수
 
+    htp = HTP()
+    results = htp.get_result(predictions)
+    print(results)
     print(scores, labels)
     # NMS 적용
     nms_indices = nms(boxes, scores, iou_threshold=0.1)
@@ -82,6 +86,7 @@ async def predict_api(item: ImageData):
             "labels": nms_labels.cpu().numpy().tolist(),
             "boxes": nms_boxes.cpu().numpy().tolist(),
             "scores": nms_scores.cpu().numpy().tolist(),
+            "results": results
         }
     ]
 
