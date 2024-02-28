@@ -61,7 +61,6 @@ async def predict_api(item: ImageData):
     # 모델 예측 수행
     with torch.no_grad():
         # print(model.roi_heads.score_thresh)
-        print(model.roi_heads.score_thresh)
         model.roi_heads.score_thresh = 0.8
         predictions = model(image)
 
@@ -69,7 +68,7 @@ async def predict_api(item: ImageData):
     labels = predictions[0]['labels']
     scores = predictions[0]['scores']  # 신뢰도 점수
 
-    print(scores)
+    print(scores, labels)
     # NMS 적용
     nms_indices = nms(boxes, scores, iou_threshold=0.1)
 
